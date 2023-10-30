@@ -1,0 +1,16 @@
+{
+    "name": "vtsoftware/php_curl_class",
+    "description": "OOP Curl handler for PHP",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "VtSoftware\\Tools\\PHPCurlClass\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "VtSoftware"
+        }
+    ],
+    "require": {}
+}
