@@ -1,4 +1,5 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace VtSoftware\Tools\PHPCurlClass;
 
 class HTTP extends CURL {
@@ -38,7 +39,9 @@ class HTTP extends CURL {
     foreach ($headers as $header) {
       if (\strlen($header) >= 4 && \substr($header, 0, 4) != 'HTTP') {
         $parts = \explode(':', \trim($header), 2);
-        $pairs[\strtolower(\trim($parts[0]))] = \trim($parts[1]);
+        if (isset($parts[1])) {
+          $pairs[\strtolower(\trim($parts[0]))] = \trim($parts[1]);
+        }
       }
     }
 
@@ -222,5 +225,62 @@ class HTTP extends CURL {
     $this->setopt(\CURLOPT_POSTFIELDS, $data);
 
     return $this;
+  }
+  public function download(String $filename, bool $stay_awake = true): self {
+    $dir = dirname($filename);
+    if (!is_dir($dir)) {
+      @mkdir($dir, 0775, true);
+    }
+
+    $tempFile = $filename . '.tmp.' . uniqid();
+    $fp = fopen($tempFile, 'w+');
+    if (!$fp) {
+      throw new Exception("Nem sikerült megnyitni a fájlt írásra: {$tempFile}");
+    }
+
+    $this->setopt(\CURLOPT_FILE, $fp);
+    $this->setopt(\CURLOPT_RETURNTRANSFER, false);
+
+    try {
+      $this->exec($stay_awake);
+    } finally {
+      if (is_resource($fp)) {
+        fflush($fp);
+        fclose($fp);
+      }
+      $this->setopt(\CURLOPT_RETURNTRANSFER, true);
+    }
+
+    $httpCode = (int)$this->getinfo(\CURLINFO_HTTP_CODE);
+    if ($httpCode === 200 && file_exists($tempFile) && filesize($tempFile) > 0) {
+      if (file_exists($filename)) {
+        @unlink($filename);
+      }
+      rename($tempFile, $filename);
+    } else {
+      if (file_exists($tempFile)) {
+        @unlink($tempFile);
+      }
+    }
+
+    return $this;
+  }
+  public function getHeaders(?String $url = null, bool $stay_awake = false): array {
+    if ($url !== null) {
+      $this->url($url);
+    }
+
+    $this->responseHeaders = '';
+
+    $this->setopts(array(
+      \CURLOPT_NOBODY => true,
+      \CURLOPT_RETURNTRANSFER => true,
+      \CURLOPT_FOLLOWLOCATION => true,
+      \CURLOPT_MAXREDIRS => 5
+    ));
+
+    $this->exec($stay_awake);
+
+    return static::parse_headers($this->responseHeaders);
   }
 }

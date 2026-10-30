@@ -12,5 +12,8 @@
             "name": "VtSoftware"
         }
     ],
-    "require": {}
+    "require": {
+        "php": ">=8.4",
+        "ext-curl": "*"
+    }
 }

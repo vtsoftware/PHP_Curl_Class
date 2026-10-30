@@ -1,4 +1,5 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace VtSoftware\Tools\PHPCurlClass;
 
 class CURL {
@@ -43,7 +44,7 @@ class CURL {
     }
 
     if ($state) {
-      $this->opts = \array_merge($this->opts, $options);
+      $this->opts = \array_replace($this->opts, $options);
     }
 
     return $this;
